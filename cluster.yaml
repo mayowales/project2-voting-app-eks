@@ -1,0 +1,38 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: wale-voting-app-eks
+  region: eu-central-1
+  version: "1.31"
+
+# This section enables IAM roles for Service Accounts (IRSA)
+# It replaces the manual 'associate-iam-oidc-provider' command
+iam:
+  withOIDC: true
+  serviceAccounts:
+    - metadata:
+        name: ebs-csi-controller-sa
+        namespace: kube-system
+      wellKnownPolicies:
+        ebsCSIController: true # Gives permission to manage EBS volumes
+
+# This section manages cluster extensions
+# It replaces the manual 'eksctl create addon' command
+addons:
+  - name: aws-ebs-csi-driver
+    resolveConflicts: overwrite
+
+managedNodeGroups:
+  - name: wale-nodegroup
+    instanceType: t3.medium
+    desiredCapacity: 2
+    minSize: 1
+    maxSize: 3
+    volumeSize: 20
+    ssh:
+      allow: true # Useful for debugging node issues
+    iam:
+      withAddonPolicies:
+        ebs: true
+        cloudWatch: true # Allows nodes to send logs to AWS
