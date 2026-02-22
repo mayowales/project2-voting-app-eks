@@ -2,21 +2,23 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: voting-app-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: nginx
   rules:
-  - http:
+  - host: vote.wale.com
+    http:
       paths:
-      - path: /vote
+      - path: /
         pathType: Prefix
         backend:
           service:
             name: vote
             port:
               number: 80
-      - path: /result
+  - host: result.wale.com
+    http:   
+      paths:
+      - path: /
         pathType: Prefix
         backend:
           service:
