@@ -1,0 +1,4 @@
+# Ignore the local secret file
+k8s-manifests/secrets.yaml
+
+

@@ -17,3 +17,11 @@ spec:
         image: mayowales/result-app:latest
         ports:
         - containerPort: 80
+        env:
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: voting-app-secrets
+              key: postgres-password
