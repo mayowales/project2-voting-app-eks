@@ -3,7 +3,7 @@ name: CI-CD-Pipeline
 on:
   push:
     branches:
-      - '*'
+      - '**'
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -16,6 +16,9 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set Branch Name
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed 's/\//-/g')" >> $GITHUB_ENV
 
       - name: Build and Push Images
         run: |
@@ -36,7 +39,18 @@ jobs:
       - name: Update Kubeconfig
         run: aws eks update-kubeconfig --name wale-voting-app-eks --region eu-central-1
 
+      - name: Create K8s Secret from GitHub
+        run: |
+          kubectl create secret generic voting-app-secrets \
+            --from-literal=postgres-user='postgres' \
+            --from-literal=postgres-password='${{ secrets.DB_PASSWORD }}' \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Deploy to EKS
         run: |
           kubectl apply -f k8s-manifests/
-          kubectl apply -f k8s-manifests/ingress.yaml
+
+          # This overrides the 'latest' tag in your YAMLs with the branch tag
+          kubectl set image deployment/vote vote=${{ secrets.DOCKER_USERNAME }}/vote:${{ env.BRANCH_NAME }}
+          kubectl set image deployment/result result=${{ secrets.DOCKER_USERNAME }}/result:${{ env.BRANCH_NAME }}
+          kubectl set image deployment/worker worker=${{ secrets.DOCKER_USERNAME }}/worker:${{ env.BRANCH_NAME }}

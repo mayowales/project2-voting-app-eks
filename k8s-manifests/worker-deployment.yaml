@@ -15,3 +15,11 @@ spec:
       containers:
       - name: worker
         image: mayowales/worker-app:latest
+        env:
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: voting-app-secrets
+              key: postgres-password
